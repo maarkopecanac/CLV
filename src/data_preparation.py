@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 import os
+"""joblib cuva scaler za kasniju upotrebu, knn"""
+import joblib
 
 # -------------------------------
 # PUTANJE
@@ -124,7 +126,7 @@ def compute_rfm(df, invoice_col, customer_col, price_col):
     print(f"      Broj kupaca prije skaliranja: {len(rfm):,}")
     
     # Ispis prije skaliranja (prvih 5 redova)
-    print("\n\RFM prije skaliranja (prvih 5 redova):")
+    print("\nRFM prije skaliranja (prvih 5 redova):")
     print(rfm.head())
     
     # Skaliranje
@@ -134,12 +136,16 @@ def compute_rfm(df, invoice_col, customer_col, price_col):
     )
     
     # Ispis poslije skaliranja
-    print("\n[DEBUG] RFM poslije skaliranja (prvih 5 redova):")
+    print("\nRFM poslije skaliranja (prvih 5 redova):")
     print(rfm.head())
     
     # Sačuvaj
     rfm.to_csv(RFM_SCALED, index=False)
     print(f"\n      Sačuvano: {RFM_SCALED} (ukupno {len(rfm)} kupaca)")
+
+    scaler_path = os.path.join(PROCESSED_DIR, 'scaler.pkl')
+    joblib.dump(scaler, scaler_path)
+    print(f"        Scaler sačuvan: {scaler_path}")
     
     return rfm
 
@@ -166,5 +172,5 @@ if __name__ == '__main__':
     rfm = compute_rfm(df, invoice_col, customer_col, price_col)
     
     print("\n" + "=" * 50)
-    print("✓ PRIREMA PODATAKA ZAVRŠENA!")
+    print("PRIREMA PODATAKA ZAVRŠENA!")
     print("=" * 50)

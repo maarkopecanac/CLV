@@ -1,4 +1,4 @@
-Segment,Recency,Frequency,Monetary
-0,1.24,-0.31,-0.15
-1,-0.65,0.11,0.02
-2,-0.84,12.01,12.68
+CLV_Segment,Recency,Frequency,Monetary
+High CLV,-0.84,12.01,12.68
+Low CLV,1.24,-0.31,-0.15
+Mid CLV,-0.65,0.11,0.02
