@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 import os
+import numpy as np
 
 # -------------------------------
 # PUTANJE
@@ -62,6 +63,9 @@ def segments_table(rfm):
 
     table['Postotak'] = (table['Broj_kupaca'] / len(rfm) * 100).round(1)
 
+    # Sortiraj tabelu prema prosječnoj Monetary (od najmanje ka najvećoj)
+    table = table.sort_values('Monetary').reset_index(drop=True)
+
     print(table.to_string(index=False))
     table.to_csv(SEGMENTS_TABLE, index=False)
     print(f"      Sačuvano: {SEGMENTS_TABLE}")
@@ -74,23 +78,29 @@ def segments_table(rfm):
 # -------------------------------
 
 def plot_bar(rfm):
-    """Bar chart – broj kupaca po segmentu."""
+    """Bar chart – broj kupaca po segmentu (dinamički za bilo koji broj segmenata)."""
     print("\n[3/4] Bar plot (distribucija kupaca)...")
 
-    order  = ['Low CLV', 'Mid CLV', 'High CLV']
+    # Sortiraj segmente prema prosječnoj Monetary (od najmanje ka najvećoj)
+    order = rfm.groupby('CLV_Segment')['Monetary'].mean().sort_values().index.tolist()
     counts = rfm['CLV_Segment'].value_counts().reindex(order)
-    colors = ['#e74c3c', '#f39c12', '#2ecc71']
 
-    plt.figure(figsize=(7, 5))
-    bars = plt.bar(counts.index, counts.values, color=colors, edgecolor='white', width=0.5)
+    n_segments = len(order)
+    # Dinamičke boje iz colormap (tab10 ima 10 različitih boja)
+    colormap = plt.cm.tab10
+    colors = [colormap(i / n_segments) for i in range(n_segments)]
+
+    plt.figure(figsize=(9, 5))
+    bars = plt.bar(counts.index, counts.values, color=colors, edgecolor='white', width=0.6)
 
     for bar, val in zip(bars, counts.values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 10,
-                 f'{val}', ha='center', va='bottom', fontweight='bold')
+                 f'{val}', ha='center', va='bottom', fontweight='bold', fontsize=10)
 
     plt.title('Broj kupaca po CLV segmentu', fontsize=14)
     plt.xlabel('CLV Segment', fontsize=12)
     plt.ylabel('Broj kupaca', fontsize=12)
+    plt.xticks(rotation=30, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.4)
     plt.tight_layout()
     plt.savefig(BAR_PLOT, dpi=150)
@@ -103,23 +113,29 @@ def plot_bar(rfm):
 # -------------------------------
 
 def plot_scatter(rfm):
-    """Scatter plot – Recency vs Frequency, boja po segmentu."""
+    """Scatter plot – Recency vs Frequency, boja po segmentu (dinamički)."""
     print("\n[4/4] Scatter plot (Recency vs Frequency)...")
 
-    colors = {'Low CLV': '#e74c3c', 'Mid CLV': '#f39c12', 'High CLV': '#2ecc71'}
+    # Sortiraj segmente prema prosječnoj Monetary za konzistentne boje
+    order = rfm.groupby('CLV_Segment')['Monetary'].mean().sort_values().index.tolist()
+    n_segments = len(order)
+    
+    # Dinamičke boje
+    colormap = plt.cm.tab10
+    colors = {segment: colormap(i / n_segments) for i, segment in enumerate(order)}
 
-    plt.figure(figsize=(9, 6))
+    plt.figure(figsize=(10, 6))
     for segment, group in rfm.groupby('CLV_Segment'):
         plt.scatter(group['Recency'], group['Frequency'],
-                    c=colors[segment], label=segment, alpha=0.6, s=30)
+                    c=[colors[segment]], label=segment, alpha=0.6, s=25)
 
     plt.title('Raspored kupaca – Recency vs Frequency', fontsize=14)
     plt.xlabel('Recency (skalirano)', fontsize=12)
     plt.ylabel('Frequency (skalirano)', fontsize=12)
-    plt.legend()
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, linestyle='--', alpha=0.4)
     plt.tight_layout()
-    plt.savefig(SCATTER_PLOT, dpi=150)
+    plt.savefig(SCATTER_PLOT, dpi=150, bbox_inches='tight')
     plt.close()
     print(f"      Sačuvano: {SCATTER_PLOT}")
 

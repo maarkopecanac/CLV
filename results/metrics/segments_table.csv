@@ -1,4 +1,6 @@
 CLV_Segment,Broj_kupaca,Recency,Frequency,Monetary,Postotak
-High CLV,27,-0.87,9.86,10.17,0.5
-Low CLV,2008,1.25,-0.31,-0.15,34.2
-Mid CLV,3843,-0.64,0.09,0.01,65.4
+Very Low CLV,1917,1.29,-0.32,-0.15,32.6
+Low CLV,3534,-0.6,-0.09,-0.08,60.1
+Mid CLV,399,-0.82,1.67,0.73,6.8
+High CLV,24,-0.85,8.73,6.64,0.4
+Very High CLV,4,-0.95,15.85,29.44,0.1

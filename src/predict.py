@@ -39,25 +39,6 @@ REPORT_XLSX      = os.path.join(METRICS_DIR,   'knn_izvjestaj.xlsx')
 
 
 # -------------------------------
-# POMOĆNA FUNKCIJA: kompozitni RFM skor
-# -------------------------------
-
-def build_segment_map(rfm_df):
-    """
-    Mapira klaster_id -> CLV naziv na osnovu kompozitnog RFM skora.
-    Kompozitni skor = -Recency + Frequency + Monetary
-    Recency je invertovan jer manji Recency = aktivniji kupac = bolje.
-    """
-    avg = rfm_df.groupby('Segment')[['Recency', 'Frequency', 'Monetary']].mean()
-    avg['CLV_Score'] = -avg['Recency'] + avg['Frequency'] + avg['Monetary']
-    avg_sorted = avg['CLV_Score'].sort_values()
-    labels = ['Low CLV', 'Mid CLV', 'High CLV']
-    segment_map = {int(cluster_id): label
-                   for cluster_id, label in zip(avg_sorted.index, labels)}
-    return segment_map
-
-
-# -------------------------------
 # POMOĆNA FUNKCIJA: matrica konfuzije kao slika
 # -------------------------------
 
@@ -159,7 +140,6 @@ def save_report_xlsx(accuracy, cm, class_names, report_dict):
         ('Broj train primjera', f'{len(pd.read_csv(RFM_TRAIN)):,}', '80% ukupnih kupaca'),
         ('Broj test primjera',  f'{len(pd.read_csv(RFM_TEST)):,}',  '20% ukupnih kupaca'),
         ('Broj susjeda (K)',    '5',                         'KNN hiperparametar'),
-        ('Broj klasa',          '3',                         'Low CLV, Mid CLV, High CLV'),
     ]
 
     for row_idx, (metrika, vrijednost, napomena) in enumerate(podaci, 3):
@@ -275,9 +255,14 @@ def train_knn():
     print(f"      Train podaci: {len(X_train)} kupaca")
     print(f"      Test podaci:  {len(X_test)} kupaca")
 
+    # Učitaj mapiranje – dinamički određuje broj klasa
     segment_map = joblib.load(SEGMENT_MAP_PATH)
+    n_clusters = len(segment_map)  # automatski: 3, 4, 5...
     class_names = [segment_map[i] for i in sorted(segment_map.keys())]
-    print(f"\n      Mapiranje klastera: {segment_map}")
+    
+    print(f"\n      Mapiranje klastera (n = {n_clusters}):")
+    for k, v in segment_map.items():
+        print(f"         Klaster {k} -> {v}")
 
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
@@ -343,13 +328,15 @@ def run():
 
     knn, segment_map = train_knn()
 
-    print("\n[3/3] Primjeri predikcija za nove kupce:")
+    print("\n[2/2] Primjeri predikcija za nove kupce:")
     print()
 
+    # Primjeri su prilagođeni da pokažu kako model radi za različite profile
+    # Ovi primjeri nisu hardkodovani u model – on ih sam predviđa
     primjeri = [
-        (350, 1,    200,   "Low CLV"),
-        (60,  15,   4000,  "Mid CLV"),
-        (7,   90,   52000, "High CLV"),
+        (350, 1,    200,   "Low CLV (očekivano)"),
+        (60,  15,   4000,  "Mid CLV (očekivano)"),
+        (7,   90,   52000, "High CLV (očekivano)"),
     ]
 
     for r, f, m, ocekivano in primjeri:

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pickle
 import joblib
 import os
+import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 
@@ -63,10 +64,52 @@ def build_segment_map(rfm_df):
     # Sortiraj po skoru rastuce: najmanji skor = Low CLV, najveci = High CLV
     avg_sorted = avg['CLV_Score'].sort_values()
 
-    labels = ['Low CLV', 'Mid CLV', 'High CLV']
+    n_clusters = len(avg_sorted)
+    if n_clusters == 3:
+        labels = ['Low CLV', 'Mid CLV', 'High CLV']
+    elif n_clusters == 4:
+        labels = ['Low CLV', 'Mid-Low CLV', 'Mid-High CLV', 'High CLV']
+    elif n_clusters == 5:
+        labels = ['Very Low CLV', 'Low CLV', 'Mid CLV', 'High CLV', 'Very High CLV']
+    else:
+        labels = [f'CLV_{i+1}' for i in range(n_clusters)]
+
     segment_map = {int(cluster_id): label
                    for cluster_id, label in zip(avg_sorted.index, labels)}
     return segment_map
+
+
+# -------------------------------
+# FUNKCIJA ZA AUTOMATSKI ODABIR K (ELBOW LAKAT)
+# -------------------------------
+
+def find_optimal_k(wcss, k_min=1, k_max=10):
+    """
+    Pronalazi 'lakat' – tačku gdje pad WCSS-a više nije značajan.
+    Vraća optimalan broj klastera.
+    """
+    if len(wcss) < 3:
+        return 3
+    
+    # Računamo procentualne promjene
+    diffs = [abs(wcss[i] - wcss[i+1]) for i in range(len(wcss)-1)]
+    
+    # Normalizuj promjene (da budu u opsegu 0-1)
+    max_diff = max(diffs)
+    if max_diff > 0:
+        diffs_norm = [d / max_diff for d in diffs]
+    else:
+        diffs_norm = diffs
+    
+    # Lakat je tamo gdje promjena prvi put padne ispod 30% maksimalne promjene
+    for i, diff in enumerate(diffs_norm):
+        if diff < 0.3:
+            # +2 jer diffs[0] je promjena između k=1 i k=2
+            # i=0 -> k=2, i=1 -> k=3, itd.
+            return i + k_min + 1
+    
+    # Ako nema jasnog lakta, vrati 3 (default)
+    return 3
 
 
 # -------------------------------
@@ -142,13 +185,15 @@ def elbow_method(rfm_train, k_min=1, k_max=10):
     plt.savefig(ELBOW_PATH, dpi=150)
     plt.close()
     print(f"      Elbow graf sačuvan: {ELBOW_PATH}")
+    
+    return wcss
 
 
 # -------------------------------
 # 4. TRENIRANJE K-MEANS (samo na train podacima)
 # -------------------------------
 
-def train_kmeans(rfm_train, n_clusters=3):
+def train_kmeans(rfm_train, n_clusters):
     """
     Trenira K-Means isključivo na train podacima.
     Test podaci simuliraju nove, neviđene kupce.
@@ -233,19 +278,24 @@ def assign_segments(rfm_train, rfm_test, kmeans):
 # 6. GLAVNA FUNKCIJA
 # -------------------------------
 
-def run(n_clusters=3):
+def run():
     print("=" * 60)
-    print("K-MEANS KLASTERIZACIJA ZA CLV PROJEKAT")
+    print("K-MEANS KLASTERIZACIJA SA AUTOMATSKIM ODABIROM K")
     print("=" * 60)
 
-    rfm                              = load_data()
-    rfm_train, rfm_test              = split_data(rfm)
-    elbow_method(rfm_train)
-    kmeans                           = train_kmeans(rfm_train, n_clusters)
-    rfm_all, rfm_train, rfm_test     = assign_segments(rfm_train, rfm_test, kmeans)
+    rfm                  = load_data()
+    rfm_train, rfm_test  = split_data(rfm)
+    wcss                 = elbow_method(rfm_train)
+    
+    # Automatski odaberi optimalan broj klastera
+    optimal_k = find_optimal_k(wcss)
+    print(f"\n[INFO] Automatski odabrani broj klastera: K = {optimal_k}")
+    
+    kmeans               = train_kmeans(rfm_train, optimal_k)
+    rfm_all, rfm_train, rfm_test = assign_segments(rfm_train, rfm_test, kmeans)
 
     print("\n" + "=" * 60)
-    print(f"KLASTERIZACIJA ZAVRŠENA! (k = {n_clusters})")
+    print(f"KLASTERIZACIJA ZAVRŠENA! (automatski odabrano K = {optimal_k})")
     print("=" * 60)
     print("\nNapomena: K-Means je treniran na 80% podataka.")
     print("Preostalih 20% koristi KNN klasifikator za evaluaciju.")
@@ -254,4 +304,4 @@ def run(n_clusters=3):
 
 
 if __name__ == '__main__':
-    run(n_clusters=3)
+    run()

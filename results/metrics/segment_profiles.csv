@@ -1,4 +1,6 @@
 CLV_Segment,Recency,Frequency,Monetary
-High CLV,-0.87,9.86,10.17
-Low CLV,1.25,-0.31,-0.15
-Mid CLV,-0.64,0.09,0.01
+High CLV,-0.85,8.73,6.64
+Low CLV,-0.6,-0.09,-0.08
+Mid CLV,-0.82,1.67,0.73
+Very High CLV,-0.95,15.85,29.44
+Very Low CLV,1.29,-0.32,-0.15
