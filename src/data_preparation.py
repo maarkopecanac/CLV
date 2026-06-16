@@ -15,8 +15,9 @@ RAW_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw')
 PROCESSED_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'processed')
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
-RAW_FILE = os.path.join(RAW_DIR, 'online_retail_II.xlsx')
-RFM_CLEAN = os.path.join(PROCESSED_DIR, 'rfm_clean.csv')
+RAW_FILE       = os.path.join(RAW_DIR, 'online_retail_II.xlsx')
+SYNTHETIC_FILE = os.path.join(RAW_DIR, 'synthetic_high_clv.csv')
+RFM_CLEAN      = os.path.join(PROCESSED_DIR, 'rfm_clean.csv')
 
 
 def load_and_clean():
@@ -27,8 +28,17 @@ def load_and_clean():
     df_1 = pd.read_excel(RAW_FILE, sheet_name='Year 2009-2010')
     df_2 = pd.read_excel(RAW_FILE, sheet_name='Year 2010-2011')
     df = pd.concat([df_1, df_2], ignore_index=True)
-    
-    print(f"      Učitano redova: {len(df):,}")
+
+    # Učitaj sintetičke podatke ako postoje
+    if os.path.exists(SYNTHETIC_FILE):
+        df_synthetic = pd.read_csv(SYNTHETIC_FILE, dtype={'Customer ID': str})
+        df_synthetic['InvoiceDate'] = pd.to_datetime(df_synthetic['InvoiceDate'])
+        df = pd.concat([df, df_synthetic], ignore_index=True)
+        print(f"      Originalni redovi:  {len(df_1) + len(df_2):,}")
+        print(f"      Sintetički redovi:  {len(df_synthetic):,}")
+        print(f"      Ukupno redova:      {len(df):,}")
+    else:
+        print(f"      Učitano redova: {len(df):,}")
     
     print("[2/2] Čišćenje podataka...")
     

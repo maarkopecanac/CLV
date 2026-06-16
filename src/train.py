@@ -206,10 +206,6 @@ def assign_segments(rfm_train_scaled, rfm_test_scaled, kmeans):
     segment_map = build_segment_map(rfm_train_scaled)
     joblib.dump(segment_map, SEGMENT_MAP_PATH)
     
-    print("\n      Mapiranje klastera:")
-    for k, v in segment_map.items():
-        print(f"      Klaster {k} -> {v}")
-    
     rfm_train_scaled['CLV_Segment'] = rfm_train_scaled['Segment'].map(segment_map)
     rfm_test_scaled['CLV_Segment'] = rfm_test_scaled['Segment'].map(segment_map)
     

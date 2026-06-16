@@ -196,16 +196,9 @@ def train_knn():
     print(f"      Train podaci: {len(X_train)} kupaca")
     print(f"      Test podaci: {len(X_test)} kupaca")
     
-    # Učitaj mapu klaster -> CLV grupa
-    cluster_to_clv = joblib.load(os.path.join(METRICS_DIR, 'cluster_to_clv.pkl'))
-    
     # Pronađi stvarne klase (Low, Mid, High)
     unique_classes = np.unique(np.concatenate([y_train, y_test]))
     class_names = sorted(unique_classes, key=lambda x: ['Low CLV', 'Mid CLV', 'High CLV'].index(x) if x in ['Low CLV', 'Mid CLV', 'High CLV'] else 99)
-    
-    print(f"\n      Klasifikacija u {len(class_names)} grupe:")
-    for cls in class_names:
-        print(f"         {cls}")
     
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
@@ -232,16 +225,13 @@ def predict_new_customer(recency, frequency, monetary):
     segment_id = knn.predict(X_new)[0]
     segment_name = segment_map[int(segment_id)]
     
-    # Mapiranje 6 segmenata u 3 na osnovu vizuelne analize
-    clv_map = {
-        'CLV_1': 'Low CLV',
-        'CLV_2': 'Low CLV',
-        'CLV_3': 'Mid CLV',
-        'CLV_4': 'High CLV',
-        'CLV_5': 'High CLV',
-        'CLV_6': 'High CLV',
-    }
-    return clv_map.get(segment_name, segment_name)
+    # Dinamičko grupisanje u 3 klase na osnovu naziva segmenta
+    if 'Very Low' in segment_name or segment_name == 'Low CLV' or 'CLV_1' in segment_name or 'CLV_2' in segment_name:
+        return 'Low CLV'
+    elif 'Mid' in segment_name or 'CLV_3' in segment_name or 'CLV_4' in segment_name:
+        return 'Mid CLV'
+    else:
+        return 'High CLV'
 
 
 def run():
@@ -252,9 +242,21 @@ def run():
     print("\n[2/2] Primjeri predikcija za nove kupce:")
     print()
     primjeri = [
-        (350, 1, 200, "Low CLV (očekivano)"),
-        (60, 15, 4000, "Mid CLV (očekivano)"),
-        (7, 90, 52000, "High CLV (očekivano)"),
+        # Low CLV (očekivano) - rijetko kupuju, mala potrošnja
+        (400, 1, 100, "Low CLV"),
+        (350, 2, 250, "Low CLV"),
+        (200, 3, 500, "Low CLV"),
+        # Mid CLV (očekivano) - povremeno kupuju, srednja potrošnja
+        (100, 8, 2000, "Mid CLV"),
+        (60, 15, 4000, "Mid CLV"),
+        (30, 25, 8000, "Mid CLV"),
+        # High CLV (očekivano) - često kupuju, velika potrošnja
+        (10, 50, 20000, "High CLV"),
+        (5, 80, 40000, "High CLV"),
+        (2, 130, 82000, "High CLV"),
+        # Granični slučajevi
+        (150, 5, 1500, "? (granični)"),
+        (20, 40, 12000, "? (granični)"),
     ]
     for r, f, m, ocekivano in primjeri:
         segment = predict_new_customer(recency=r, frequency=f, monetary=m)
