@@ -13,27 +13,7 @@ Sistem segmentira kupce na osnovu njihovog ponašanja (Recency, Frequency, Monet
 
 ---
 
-## 📁 Struktura projekta
-CLV/
-├── data/
-│ ├── raw/ # sirovi podaci (Online Retail II)
-│ └── processed/ # očišćeni i skalirani podaci
-├── src/
-│ ├── data_preparation.py # učitavanje, čišćenje, RFM
-│ ├── train.py # K-Means klasterizacija
-│ ├── evaluate.py # evaluacija i vizualizacija
-│ └── predict.py # KNN klasifikator
-├── models/ # sačuvani modeli (.pkl)
-├── results/
-│ ├── figures/ # grafovi (elbow, scatter, bar)
-│ └── metrics/ # tabele i izvještaji (.csv, .xlsx)
-├── app/ # Streamlit aplikacija
-├── requirements.txt
-└── README.md
-
-Pokretanje
-
-### 1. Kloniraj repozitorijum
+### Pokretanje
 
 ```bash
 git clone https://github.com/maarkopecanac/CLV.git
