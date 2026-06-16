@@ -186,7 +186,7 @@ def save_report_xlsx(accuracy, cm, class_names, report_dict):
 
 
 def train_knn():
-    print("[1/3] Treniranje KNN klasifikatora...")
+    print("[1/2] Treniranje KNN klasifikatora...")
     df_train = pd.read_csv(RFM_TRAIN)
     df_test = pd.read_csv(RFM_TEST)
     X_train = df_train[['Recency', 'Frequency', 'Monetary']].values
@@ -239,30 +239,7 @@ def run():
     print("  KNN KLASIFIKATOR ZA PREDIKCIJU SEGMENTA")
     print("=" * 55)
     knn, class_names = train_knn()
-    print("\n[2/2] Primjeri predikcija za nove kupce:")
-    print()
-    primjeri = [
-        # Low CLV (očekivano) - rijetko kupuju, mala potrošnja
-        (400, 1, 100, "Low CLV"),
-        (350, 2, 250, "Low CLV"),
-        (200, 3, 500, "Low CLV"),
-        # Mid CLV (očekivano) - povremeno kupuju, srednja potrošnja
-        (100, 8, 2000, "Mid CLV"),
-        (60, 15, 4000, "Mid CLV"),
-        (30, 25, 8000, "Mid CLV"),
-        # High CLV (očekivano) - često kupuju, velika potrošnja
-        (10, 50, 20000, "High CLV"),
-        (5, 80, 40000, "High CLV"),
-        (2, 130, 82000, "High CLV"),
-        # Granični slučajevi
-        (150, 5, 1500, "? (granični)"),
-        (20, 40, 12000, "? (granični)"),
-    ]
-    for r, f, m, ocekivano in primjeri:
-        segment = predict_new_customer(recency=r, frequency=f, monetary=m)
-        print(f"   R={r:>4} dana | F={f:>3} faktura | M={m:>7,}£  ->  {segment}")
-    print()
-    print("=" * 55)
+    print("\n" + "=" * 55)
     print("  PREDIKCIJA ZAVRŠENA")
     print("=" * 55)
 
