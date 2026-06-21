@@ -8,14 +8,17 @@ import joblib
 import os
 import sys
 
-# Dodaj putanju do root foldera (da može učitati modele)
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Dodaj putanju do foldera gdje se nalazi predict.py (npr. 'src/', pored
+# train.py) - PRILAGODI naziv foldera 'src' ako se kod kod tebe zove drugačije.
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(os.path.join(BASE_DIR, 'src'))
+
+from predict import group_to_3_clv
 
 # -------------------------------
 # PUTANJE
 # -------------------------------
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SCALER_PATH = os.path.join(BASE_DIR, 'data', 'processed', 'scaler.pkl')
 KNN_MODEL_PATH = os.path.join(BASE_DIR, 'models', 'knn_model.pkl')
 SEGMENT_MAP_PATH = os.path.join(BASE_DIR, 'results', 'metrics', 'segment_map.pkl')
@@ -34,21 +37,11 @@ def load_models():
     return scaler, knn, segment_map
 
 
-def group_to_3_clv(segment_name):
-    """Grupise segmente u 3 klase (Low/Mid/High)."""
-    if 'Very Low' in segment_name or segment_name == 'Low CLV' or 'CLV_1' in segment_name or 'CLV_2' in segment_name:
-        return 'Low CLV'
-    elif 'Mid' in segment_name or 'CLV_3' in segment_name or 'CLV_4' in segment_name:
-        return 'Mid CLV'
-    else:
-        return 'High CLV'
-
-
 def predict_segment(recency, frequency, monetary, scaler, knn, segment_map):
     """Predviđa CLV segment za novog kupca."""
     X_new = scaler.transform([[recency, frequency, monetary]])
     segment_id = knn.predict(X_new)[0]
-    segment_name = segment_map[segment_id]
+    segment_name = segment_map[int(segment_id)]
     return group_to_3_clv(segment_name)
 
 

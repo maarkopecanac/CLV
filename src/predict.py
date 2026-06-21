@@ -216,6 +216,19 @@ def train_knn():
     return knn, class_names
 
 
+def group_to_3_clv(segment_name):
+    """Grupiše proizvoljan naziv segmenta u 3 finalne klase (Low/Mid/High CLV).
+    Izdvojeno u zasebnu funkciju da bi app.py mogao istu logiku samo
+    importovati odavde (from predict import group_to_3_clv), umjesto da
+    ima svoju kopiju iste if/elif/else logike."""
+    if 'Very Low' in segment_name or segment_name == 'Low CLV' or 'CLV_1' in segment_name or 'CLV_2' in segment_name:
+        return 'Low CLV'
+    elif 'Mid' in segment_name or 'CLV_3' in segment_name or 'CLV_4' in segment_name:
+        return 'Mid CLV'
+    else:
+        return 'High CLV'
+
+
 def predict_new_customer(recency, frequency, monetary):
     scaler = joblib.load(SCALER_PATH)
     segment_map = joblib.load(SEGMENT_MAP_PATH)
@@ -224,14 +237,9 @@ def predict_new_customer(recency, frequency, monetary):
     X_new = scaler.transform([[recency, frequency, monetary]])
     segment_id = knn.predict(X_new)[0]
     segment_name = segment_map[int(segment_id)]
-    
-    # Dinamičko grupisanje u 3 klase na osnovu naziva segmenta
-    if 'Very Low' in segment_name or segment_name == 'Low CLV' or 'CLV_1' in segment_name or 'CLV_2' in segment_name:
-        return 'Low CLV'
-    elif 'Mid' in segment_name or 'CLV_3' in segment_name or 'CLV_4' in segment_name:
-        return 'Mid CLV'
-    else:
-        return 'High CLV'
+
+    # Grupisanje u 3 klase - logika sada zajednička sa app.py (vidi group_to_3_clv iznad)
+    return group_to_3_clv(segment_name)
 
 
 def run():
